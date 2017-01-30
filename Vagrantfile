@@ -121,11 +121,22 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       path: "cookbook/build/qmake-git-builder.sh",
       env: {"MAKEFLAGS" => makeflags}
 
+  # Configure qtchooser
+  config.vm.provision "shell", args: [qtinstallprefix], :inline => <<-SHELL
+	QTINSTALLPREFIX=$1
+	mkdir -p /etc/xdg/qtchooser
+	echo "$QTINSTALLPREFIX/bin" > /etc/xdg/qtchooser/qt5.7-git.conf
+	echo "$QTINSTALLPREFIX/lib" >> /etc/xdg/qtchooser/qt5.7-git.conf
+  SHELL
+
   # Build gammaray
   config.vm.provision "shell", privileged: false, 
       args: ["gammaray", "https://github.com/KDAB/GammaRay.git", "-DGAMMARAY_BUILD_DOCS=off -DCMAKE_PREFIX_PATH=" + qtcmakepath],
       path: "cookbook/build/cmake-git-builder.sh",
-      env: {"MAKEFLAGS" => makeflags}
+      env: {
+          "MAKEFLAGS" => makeflags,
+          "QT_SELECT" => "qt5.7-git"
+      }
 
   # Download and install target SDK
   # TODO: Make this download machine specific
